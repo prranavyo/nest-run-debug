@@ -11,6 +11,10 @@
   "activationEvents": [
     "onLanguage:typescript"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prranavyo/nest-run-debug.git"
+  },
   "contributes": {
     "commands": [
       {
