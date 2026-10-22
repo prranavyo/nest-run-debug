@@ -1,0 +1,91 @@
+{
+  "name": "nest-run-debug",
+  "displayName": "Nest Run & Debug",
+  "description": "Run a NestJS service method or API endpoint from your code and see every DB call and step. Save test cases and create Jest tests.",
+  "version": "0.1.0",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:typescript"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "nestRun.run",
+        "title": "Nest: Run / Send Request (at cursor)"
+      },
+      {
+        "command": "nestRun.debug",
+        "title": "Nest: Debug (at cursor)"
+      }
+    ],
+    "configuration": {
+      "title": "Nest Run & Debug",
+      "properties": {
+        "nestRun.appModule": {
+          "type": "string",
+          "default": "src/app.module",
+          "description": "Path to your AppModule file, without .ts"
+        },
+        "nestRun.productionWords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "prod",
+            "live"
+          ],
+          "description": "If the database host or name contains any of these words, ask before running."
+        },
+        "nestRun.fastMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "OFF (default): your project is type-checked when it starts, like a normal build. ON: skip type-checking for a faster start (type errors will not be reported)."
+        },
+        "nestRun.keepWarm": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep your app running in the background so repeat runs are instant. It restarts by itself after you save a file."
+        },
+        "nestRun.mainFile": {
+          "type": "string",
+          "default": "src/main",
+          "description": "Path to your main file, without .ts. Used to start your app the same way as normal (global prefix, pipes...) when sending API requests."
+        },
+        "nestRun.executionTimeoutMs": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 1000,
+          "description": "Maximum time for a normal service run. Debug sessions are never automatically timed out."
+        },
+        "nestRun.httpTimeoutMs": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 1000,
+          "description": "Maximum time for an HTTP request made by the runner."
+        },
+        "nestRun.startupTimeoutMs": {
+          "type": "number",
+          "default": 60000,
+          "minimum": 1000,
+          "description": "Maximum time for the target application's HTTP bootstrap."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && node --test test/*.test.js",
+    "test:unit": "npm run compile && node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  }
+}

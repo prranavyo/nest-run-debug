@@ -1,0 +1,11 @@
+node_modules/
+out/
+.vscode-test/
+*.vsix
+
+.env
+.env.*
+!.env.example
+
+.DS_Store
+Thumbs.db
