@@ -15,27 +15,33 @@ import { attachDiagnostic } from './diagnostics';
 
 // ---------------------------------------------------------------- activate
 export function activate(ctx: vscode.ExtensionContext) {
-  ctx.subscriptions.push(
-    vscode.languages.registerCodeLensProvider({ language: 'typescript' }, new LensProvider()),
-    vscode.commands.registerCommand('nestRun.run', (arg?: unknown) => {
-      const target = resolveTarget(arg);
-      if (target) return openTarget(ctx, target, false);
-    }),
-    vscode.commands.registerCommand('nestRun.debug', (arg?: unknown) => {
-      const target = resolveTarget(arg);
-      if (target) return openTarget(ctx, target, true);
-    }),
-    // a saved file (or changed setting) means the warm process is out of date
-    vscode.workspace.onDidSaveTextDocument((doc) => {
-      const f = doc.fileName.toLowerCase();
-      if (f.includes('node_modules') || f.includes(`${path.sep}.nest-run${path.sep}`)) return;
-      for (const d of daemons.values()) if (f.startsWith(d.root.toLowerCase())) d.stale = true;
-    }),
-    vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('nestRun')) for (const d of daemons.values()) d.stale = true;
-    }),
-    { dispose: () => daemons.forEach((d) => d.dispose()) },
-  );
+  try {
+    ctx.subscriptions.push(
+      vscode.languages.registerCodeLensProvider({ language: 'typescript' }, new LensProvider()),
+      vscode.commands.registerCommand('nestRun.run', (arg?: unknown) => {
+        const target = resolveTarget(arg);
+        if (target) return openTarget(ctx, target, false);
+      }),
+      vscode.commands.registerCommand('nestRun.debug', (arg?: unknown) => {
+        const target = resolveTarget(arg);
+        if (target) return openTarget(ctx, target, true);
+      }),
+      // a saved file (or changed setting) means the warm process is out of date
+      vscode.workspace.onDidSaveTextDocument((doc) => {
+        const f = doc.fileName.toLowerCase();
+        if (f.includes('node_modules') || f.includes('.nest-run')) return;
+        for (const d of daemons.values()) if (f.startsWith(d.root.toLowerCase())) d.stale = true;
+      }),
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration('nestRun')) for (const d of daemons.values()) d.stale = true;
+      }),
+      { dispose: () => daemons.forEach((d) => d.dispose()) },
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    vscode.window.showErrorMessage(`Nest Run & Debug failed to activate: ${msg}`);
+    throw err;
+  }
 }
 
 export function deactivate() {}
@@ -63,43 +69,47 @@ class LensProvider implements vscode.CodeLensProvider {
   /** Every runnable service method / controller route in the file, in file order. */
   static find(doc: vscode.TextDocument): Found[] {
     if (/\.(spec|test|e2e-spec)\.ts$/.test(doc.fileName)) return [];
-    const text = doc.getText();
-    const found: Found[] = [];
+    try {
+      const text = doc.getText();
+      const found: Found[] = [];
 
-    // ---- controller routes: ▶ Send request
-    if (text.includes('@Controller')) {
-      for (const r of findRoutes(text)) {
-        const pos = doc.positionAt(r.decoratorOffset);
-        const target: RouteTarget = {
-          kind: 'route',
-          uri: doc.uri,
-          className: r.className,
-          method: r.method,
-          httpMethod: r.httpMethod,
-          routePath: r.routePath,
-          pathParams: r.pathParams,
-          hasBody: r.hasBody,
-          bodyType: r.bodyType,
-          bodyLine: doc.positionAt(r.bodyOffset).line,
-        };
-        found.push({ pos, target });
+      // ---- controller routes: ▶ Send request
+      if (text.includes('@Controller')) {
+        for (const r of findRoutes(text)) {
+          const pos = doc.positionAt(r.decoratorOffset);
+          const target: RouteTarget = {
+            kind: 'route',
+            uri: doc.uri,
+            className: r.className,
+            method: r.method,
+            httpMethod: r.httpMethod,
+            routePath: r.routePath,
+            pathParams: r.pathParams,
+            hasBody: r.hasBody,
+            bodyType: r.bodyType,
+            bodyLine: doc.positionAt(r.bodyOffset).line,
+          };
+          found.push({ pos, target });
+        }
       }
-    }
 
-    // ---- service methods: ▶ Run
-    if (text.includes('@Injectable') && !text.includes('@Controller')) {
-      for (const method of findMethods(text)) {
-        if (SKIP.has(method.method)) continue;
-        const pos = doc.positionAt(method.methodOffset);
-        let bodyLine = doc.positionAt(method.bodyOffset).line;
-        while (bodyLine < doc.lineCount - 1 && /^\s*(\/\/.*)?$/.test(doc.lineAt(bodyLine).text)) bodyLine++;
-        found.push({
-          pos,
-          target: { kind: 'method', uri: doc.uri, className: method.className, method: method.method, params: method.params, bodyLine },
-        });
+      // ---- service methods: ▶ Run
+      if (text.includes('@Injectable') && !text.includes('@Controller')) {
+        for (const method of findMethods(text)) {
+          if (SKIP.has(method.method)) continue;
+          const pos = doc.positionAt(method.methodOffset);
+          let bodyLine = doc.positionAt(method.bodyOffset).line;
+          while (bodyLine < doc.lineCount - 1 && /^\s*(\/\/.*)?$/.test(doc.lineAt(bodyLine).text)) bodyLine++;
+          found.push({
+            pos,
+            target: { kind: 'method', uri: doc.uri, className: method.className, method: method.method, params: method.params, bodyLine },
+          });
+        }
       }
+      return found.sort((a, b) => a.pos.line - b.pos.line);
+    } catch {
+      return [];
     }
-    return found.sort((a, b) => a.pos.line - b.pos.line);
   }
 }
 
