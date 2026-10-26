@@ -1,9 +1,10 @@
 {
-  "name": "nest-run-debug",
-  "displayName": "Nest Run & Debug",
+  "name": "nest-flow",
+  "displayName": "Nest Flow",
   "description": "Run a NestJS service method or API endpoint from your code and see every DB call and step. Save test cases and create Jest tests.",
-  "version": "0.1.4",
+  "version": "0.1.8",
   "publisher": "PranavKaranam",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -27,7 +28,7 @@
       }
     ],
     "configuration": {
-      "title": "Nest Run & Debug",
+      "title": "Nest Flow",
       "properties": {
         "nestRun.appModule": {
           "type": "string",
