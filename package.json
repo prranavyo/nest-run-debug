@@ -2,8 +2,8 @@
   "name": "nest-run-debug",
   "displayName": "Nest Run & Debug",
   "description": "Run a NestJS service method or API endpoint from your code and see every DB call and step. Save test cases and create Jest tests.",
-  "version": "0.1.3",
-  "publisher": "local",
+  "version": "0.1.4",
+  "publisher": "PranavKaranam",
   "engines": {
     "vscode": "^1.85.0"
   },
